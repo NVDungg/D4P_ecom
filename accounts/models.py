@@ -1,7 +1,53 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 # Create your models here.
+#https://docs.djangoproject.com/en/4.2/topics/auth/customizing/
 
+# Manager Custom accounts
+class MyAccountManager(BaseUserManager):
+
+    #for create custom user
+    def create_user(self, first_name, last_name, username, email, password = None):
+        #check fill information
+        if not email or not username:
+            raise ValueError('Missing email or username')
+
+        #overdrive
+        user = self.model(
+            email = self.normalize_email(email), #Normalizes email addresses by lowercasing the domain portion of the email address.
+            username = username,
+            first_name = first_name,
+            last_name = last_name,
+        )
+        #Sets the user’s password to the given raw string, taking care of the password hashing.
+        user.set_password(password)
+        #save indb
+        user.save(using=self._db)
+        return user
+    
+    #for create custom superuser(admin) 
+    def create_superuser(self, first_name, last_name, username, email, password):
+        user = self.create_user(
+            email = self.normalize_email(email),
+            username = username,
+            password = password,
+            first_name = first_name,
+            last_name = last_name,
+        )
+        
+        #permission
+        user.is_admin = True
+        user.is_active = True
+        user.is_staff = True
+        user.is_superadmin = True
+
+        user.save(using=self._db)
+        user.save()
+        return user
+
+            
+    
+#Custom for accounts
 class Account(AbstractUser):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -21,6 +67,9 @@ class Account(AbstractUser):
     USERNAME_FIELD = 'email'
 
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
+    #define accounts object using MyAccountsManager operation
+    objects = MyAccountManager()
 
     def __str__(self):
         return self.email
