@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 # Create your models here.
 class Category(models.Model):
@@ -11,6 +12,11 @@ class Category(models.Model):
         '''Rename model in admin model'''
         verbose_name = 'category'   
         verbose_name_plural = 'categories'
+
+    def get_url(self):
+        '''make fucntion reverse to category by slug use url name of store'''
+        return reverse('product_category', args=[self.slug])
+            #reverse(url_name, args=args, kwargs=kwargs)
 
     def __str__(self):
         return self.category_name

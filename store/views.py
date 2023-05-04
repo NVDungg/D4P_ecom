@@ -10,6 +10,7 @@ class ProductListView(ListView):
     template_name = 'store/store.html'
 
     def get_context_data(self, **kwargs):
+        #retrieves the value of the category_slug parameter from the URL path.
         category_slug = self.kwargs.get('category_slug')
         categories = None
         products = None
