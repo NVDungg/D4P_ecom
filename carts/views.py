@@ -66,7 +66,7 @@ def get_context_data(self, **kwargs):
 class CartItemDeleteView(DeleteView):
     model = CartItem
     success_url = reverse_lazy('cart_view')
-    template_name = 'cart/cart.html'
+    template_name = 'cart/cartitem_confirm_delete.html'
     
     def get_object(self, queryset=None):
         # Get id of 2
