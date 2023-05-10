@@ -5,6 +5,8 @@ from django.views.generic import ListView, DetailView
 
 from .models import Product
 from categorys.models import Category
+from carts.models import CartItem
+from carts.views import _cart_id
 
 # Create your views here.
 class ProductListView(ListView):
@@ -45,4 +47,13 @@ class ProductDetailView(DetailView):
         #Retrieve the product that matches the given category and product slugs.
         product = get_object_or_404(Product, slug=product_slug, category__slug=category_slug)
         return product
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(self.request), product=self.object).exists()
+        context.update({
+            'in_cart':in_cart,
+        })
+        return context
+    
     
