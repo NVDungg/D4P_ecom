@@ -50,6 +50,7 @@ class ProductDetailView(DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        #Check Item in_cart
         in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(self.request), product=self.object).exists()
         context.update({
             'in_cart':in_cart,
