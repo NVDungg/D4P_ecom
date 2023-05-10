@@ -69,14 +69,21 @@ class CartItemDeleteView(DeleteView):
     template_name = 'cart/cart.html'
     
     def get_object(self, queryset=None):
-        product_id = self.kwargs['product_id']
-        cart_item_id = self.kwargs['cart_item_id']
+        # Get id of 2
+        product_id = self.kwargs.get('product_id')
+        cart_item_id = self.kwargs.get('cart_item_id')
+
+        # Get object 
         product = get_object_or_404(Product, id=product_id)
         cart = Cart.objects.get(cart_id=_cart_id(self.request))
+
+        #n conves it to return
         cart_item = get_object_or_404(CartItem, product=product, cart=cart, id=cart_item_id)
         return cart_item
     
     def delete(self, request, *args, **kwargs):
+        '''check if cart_item.quantity > 1 before decrementing the quantity and saving the object. 
+        If the quantity becomes zero or less, we delete the cart_item directly.'''
         cart_item = self.get_object()
         if cart_item.quantity > 1:
             cart_item.quantity -= 1
