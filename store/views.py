@@ -2,6 +2,7 @@ from typing import Any, Optional
 from django.db import models
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView
+from django.core.paginator import Paginator
 
 from .models import Product
 from categorys.models import Category
@@ -12,6 +13,7 @@ from carts.views import _cart_id
 class ProductListView(ListView):
     model = Product
     template_name = 'store/store.html'
+    paginate_by = 6
 
     def get_context_data(self, **kwargs):
         #retrieves the value of the category_slug parameter from the URL path.
@@ -24,8 +26,16 @@ class ProductListView(ListView):
             products = Product.objects.filter(category=categories, is_avaiable=True)
         else:
             products = Product.objects.filter(is_avaiable=True)
-        context = { 'products': products,
-                    'total': Product.objects.count(), }
+        
+        # Paginate the products | paginator is override query to only get enought item = paginate_by
+        paginator = Paginator(products, self.paginate_by)
+        page = self.request.GET.get('page')
+        paginated_products = paginator.get_page(page)
+
+        context = { 
+            'products':paginated_products,  #The products still a query to model but only get item = paginate_by per page
+            'total': Product.objects.count(), 
+        }
         return context
     
 class ProductDetailView(DetailView):
