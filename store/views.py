@@ -3,6 +3,7 @@ from django.db import models
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.core.paginator import Paginator
+from django.db.models import Q
 
 from .models import Product
 from categorys.models import Category
@@ -67,4 +68,17 @@ class ProductDetailView(DetailView):
         })
         return context
     
+def search(request):
+    #products = None
+    #product_count = 0
+    if 'keyword' in request.GET:    #get name in form by method 
+        keyword = request.GET['keyword']
+        if keyword:
+            products = Product.objects.order_by('-created_date').filter(Q(description__icontains=keyword) | Q(product_name__icontains=keyword))
+            product_count = products.count()
+    context = {
+        'products': products,
+        'product_count': product_count,
+    }
+    return render(request, 'store/store.html', context)
     
