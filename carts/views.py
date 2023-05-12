@@ -93,6 +93,9 @@ class CartItemDeleteView(DeleteView):
         return redirect('cart_view')
 
 def add_cart(request, product_id):
+    color = request.GET['color']
+    size = request.GET['size']
+
     product = Product.objects.get(id=product_id)
 
     try:

@@ -5,76 +5,58 @@
 <div class="card">
 	<div class="row no-gutters">
 		<aside class="col-md-6">
-<article class="gallery-wrap"> 
-	<div class="img-big-wrap">
-	   <a href="#"><img src="{{ product.image.url }}"></a>
-	</div> <!-- img-big-wrap.// -->
-	
-</article> <!-- gallery-wrap .end// -->
+			<article class="gallery-wrap"> 
+				<div class="img-big-wrap">
+					<a href="#"><img src="{{ product.image.url }}"></a>
+				</div> <!-- img-big-wrap.// -->			
+			</article> <!-- gallery-wrap .end// -->
 		</aside>
-		<main class="col-md-6 border-left">
-<article class="content-body">
 
-<h2 class="title">{{ product.product_name }}</h2>
+<main class="col-md-6 border-left">
+	<form action="{% url 'add_cart' product.id %}" method="GET">
+		<article class="content-body">
+			<h2 class="title">{{ product.product_name }}</h2>
 
-<div class="mb-3"> 
-	<var class="price h4">${{ product.price }}</var> 
-</div> 
-
-<p>{{ product.description }}</p>
-
-
-<hr>
-	<div class="row">
-		<div class="item-option-select">
-			<h6>Choose Color</h6>
-			<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-			  <label class="btn btn-light">
-			    <input type="radio" name="radio_color"> Silver
-			  </label>
-			  <label class="btn btn-light">
-			    <input type="radio" name="radio_color" > Gray
-			  </label>
-			  <label class="btn btn-light active">
-			    <input type="radio" name="radio_color checked"> Gold
-			  </label>
-			  <label class="btn btn-light">
-			    <input type="radio" name="radio_color"> Black
-			  </label>
+			<div class="mb-3"> 
+				<var class="price h4">${{ product.price }}</var> 
 			</div> 
-		</div>
-	</div> <!-- row.// -->
-	<div class="row">
-		<div class="item-option-select">
-			<h6>Select Size</h6>
-			<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-			  <label class="btn btn-light">
-			    <input type="radio" name="radio_color"> S
-			  </label>
-			  <label class="btn btn-light active">
-			    <input type="radio" name="radio_color" checked> M
-			  </label>
-			  <label class="btn btn-light">
-			    <input type="radio" name="radio_color"> L
-			  </label>
-			  <label class="btn btn-light">
-			    <input type="radio" name="radio_color"> XL
-			  </label>
-			</div> 
-		</div>
-	</div> <!-- row.// -->
-	<hr>
-    {% if product.stock <= 0 %}
-        <h5>Out of Stocks</h5>
-    {% else %}
-		{% if in_cart %}
-			<h4>You Had This Item In Cart</h4>
-			<a href="{% url 'cart_view' %}" class="btn  btn-primary"> <span class="text">View Cart</span> <i class="fas fa-eye"></i>  </a>
-		{% else %}
-			<a href="{% url 'add_cart' product.id %}" class="btn  btn-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i>  </a>
-		{% endif %}
-    {% endif %}
-</article> <!-- product-info-aside .// -->
+
+			<p>{{ product.description }}</p>
+
+			<hr>
+				<div class="row">
+					<div class="item-option-select">
+						<h6>Choose Color</h6>
+						<select name="color" class="form-control-lg" required>
+							<option value="red">Red</option>
+							<option value="yellow">Yellow</option>
+							<option value="green">Green</option>
+						</select>
+					</div>
+				</div> <!-- row.// -->
+				<div class="row">
+					<div class="item-option-select">
+						<h6>Select Size</h6>
+						<select name="size" class="form-control-lg" required>
+							<option value="small">Small</option>
+							<option value="medium">Medium</option>
+							<option value="large">Large</option>
+						</select>
+					</div>
+				</div> <!-- row.// -->
+				<hr>
+				{% if product.stock <= 0 %}
+					<h5>Out of Stocks</h5>
+				{% else %}
+					{% if in_cart %}
+						<h4>You Had This Item In Cart</h4>
+						<a href="{% url 'cart_view' %}" class="btn  btn-primary"> <span class="text">View Cart</span> <i class="fas fa-eye"></i>  </a>
+					{% else %}
+						<button type="submit" class="btn  btn-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i>  </button>
+					{% endif %}
+				{% endif %}
+		</article> <!-- product-info-aside .// -->
+	</form>	
 		</main> <!-- col.// -->
 	</div> <!-- row.// -->
 </div> <!-- card.// -->
