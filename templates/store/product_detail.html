@@ -13,7 +13,8 @@
 		</aside>
 
 <main class="col-md-6 border-left">
-	<form action="{% url 'add_cart' product.id %}" method="GET">
+	<form action="{% url 'add_cart' product.id %}" method="POST">
+		{% csrf_token %}
 		<article class="content-body">
 			<h2 class="title">{{ product.product_name }}</h2>
 
@@ -28,19 +29,22 @@
 					<div class="item-option-select">
 						<h6>Choose Color</h6>
 						<select name="color" class="form-control-lg" required>
-							<option value="red">Red</option>
-							<option value="yellow">Yellow</option>
-							<option value="green">Green</option>
+							<option value="" disabled selected>Select </option>
+							{% for i in product.variation_set.colors %}
+							<option value="{{ i.variation_value | lower }}">{{ i.variation_value | capfirst }}</option>
+							{% endfor %}
 						</select>
 					</div>
 				</div> <!-- row.// -->
+
 				<div class="row">
 					<div class="item-option-select">
 						<h6>Select Size</h6>
 						<select name="size" class="form-control-lg" required>
-							<option value="small">Small</option>
-							<option value="medium">Medium</option>
-							<option value="large">Large</option>
+							<option value="" disabled selected>Select </option>
+							{% for i in product.variation_set.sizes %}
+							<option value="{{ i.variation_value | lower }}">{{ i.variation_value | capfirst }}</option>
+							{% endfor %}
 						</select>
 					</div>
 				</div> <!-- row.// -->
@@ -74,7 +78,7 @@
 
 	<article class="box mb-3">
 		<div class="icontext w-100">
-			<img src="./images/avatars/avatar1.jpg" class="img-xs icon rounded-circle">
+			<img src="{% static './images/avatars/avatar1.jpg' %}" class="img-xs icon rounded-circle">
 			<div class="text">
 				<span class="date text-muted float-md-right">24.04.2020 </span>  
 				<h6 class="mb-1">Mike John </h6>

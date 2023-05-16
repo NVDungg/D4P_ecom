@@ -24,9 +24,9 @@ class ProductListView(ListView):
         
         if category_slug != None:
             categories = get_object_or_404(Category, slug = category_slug)
-            products = Product.objects.filter(category=categories, is_avaiable=True)
+            products = Product.objects.filter(category=categories, is_avaiable=True).order_by('-created_date')
         else:
-            products = Product.objects.filter(is_avaiable=True)
+            products = Product.objects.filter(is_avaiable=True).order_by('-created_date')
         
         # Paginate the products | paginator is override query to only get enought item = paginate_by
         paginator = Paginator(products, self.paginate_by)

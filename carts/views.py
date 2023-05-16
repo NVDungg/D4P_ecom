@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 #from django.contrib.auth.mixins import Mix
 from django.urls import reverse_lazy
 
-from store.models import Product
+from store.models import Product, Variation
 from .models import Cart, CartItem
 # Create your views here.
 
@@ -93,10 +93,21 @@ class CartItemDeleteView(DeleteView):
         return redirect('cart_view')
 
 def add_cart(request, product_id):
-    color = request.GET['color']
-    size = request.GET['size']
-
     product = Product.objects.get(id=product_id)
+    product_variation = []
+    if request.method == 'POST':
+        # get value by name in form
+        # instead of get 1 by 1 value color/size = request.POST['color/size'] .We can use for to get every thing form had
+        for item in request.POST:
+            key = item                  # get the key is name(variation_category) in form (color/size)
+            value = request.POST[key]   # store the value of key(variation_value)
+
+            try:
+                #check key n value exact variation category/value, map the nameproduct to variation
+                variation = Variation.object.get(product=product, variation_category__iexact=key, variation_value__iexact=value)
+                product_variation.append(variation) #store value in CartItem
+            except:
+                pass
 
     try:
         cart = Cart.objects.get(cart_id = _cart_id(request))  # implement card using cart_id( it session product)
