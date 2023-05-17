@@ -94,6 +94,8 @@ class CartItemDeleteView(DeleteView):
 
 def add_cart(request, product_id):
     product = Product.objects.get(id=product_id)
+
+    # get product_variation
     product_variation = []
     if request.method == 'POST':
         # get value by name in form
@@ -104,11 +106,12 @@ def add_cart(request, product_id):
 
             try:
                 #check key n value exact variation category/value, map the nameproduct to variation
-                variation = Variation.object.get(product=product, variation_category__iexact=key, variation_value__iexact=value)
+                variation = Variation.objects.get(product=product, variation_category__iexact=key, variation_value__iexact=value)
                 product_variation.append(variation) #store value in CartItem
             except:
                 pass
-
+    
+    # get cart
     try:
         cart = Cart.objects.get(cart_id = _cart_id(request))  # implement card using cart_id( it session product)
 
@@ -119,8 +122,13 @@ def add_cart(request, product_id):
     
     cart.save()
 
+    # get cart_item
     try:
         cart_item = CartItem.objects.get(product=product, cart=cart)    #conves product n session product to cart_item in cart
+        if len(product_variation) > 0:      #check if not empty then add in db
+            cart_item.variations.clear()
+            for item in product_variation:
+                cart_item.variations.add(item)
         cart_item.quantity += 1 # increase after click
         cart_item.save()
     except CartItem.DoesNotExist:
@@ -129,6 +137,10 @@ def add_cart(request, product_id):
             quantity = 1,
             cart = cart,
         )
+        if len(product_variation) > 0:
+            cart_item.variations.clear()
+            for item in product_variation:
+                cart_item.variations.add(item)
         cart_item.save()
     
     return redirect('cart_view')
