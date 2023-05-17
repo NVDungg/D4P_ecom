@@ -17,7 +17,7 @@ class CartItemView(ListView):
     def get_queryset(self):
         try:
             cart = Cart.objects.get(cart_id=_cart_id(self.request))
-            cart_items = CartItem.objects.filter(cart=cart, is_active=True)
+            cart_items = CartItem.objects.filter(cart=cart, is_active=True).order_by('-id')
             return cart_items   # This context name ( You can return CartItem.objects.filter(cart=cart, is_active=True) soo u can use any context u naming)
         except ObjectDoesNotExist:
             return CartItem.objects.none()
@@ -66,7 +66,6 @@ def get_context_data(self, **kwargs):
 class CartItemDeleteView(DeleteView):
     model = CartItem
     success_url = reverse_lazy('cart_view')
-    template_name = 'cart/cartitem_confirm_delete.html'
     
     def get_object(self, queryset=None):
         # Get id of 2
@@ -81,7 +80,7 @@ class CartItemDeleteView(DeleteView):
         cart_item = get_object_or_404(CartItem, product=product, cart=cart, id=cart_item_id)
         return cart_item
     
-    def delete(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):    #to skip comfirm delete
         '''check if cart_item.quantity > 1 before decrementing the quantity and saving the object. 
         If the quantity becomes zero or less, we delete the cart_item directly.'''
         cart_item = self.get_object()
@@ -90,7 +89,23 @@ class CartItemDeleteView(DeleteView):
             cart_item.save()
         else:
             cart_item.delete()
-        return redirect('cart_view')
+        return redirect(self.success_url)
+    
+class RemoveCartItemView(DeleteView):
+    model = CartItem
+    template_name = 'cart/cartitem_confirm_delete.html'
+    success_url = reverse_lazy('cart_view')
+
+    def get_object(self, queryset=None):
+        cart = Cart.objects.get(cart_id=_cart_id(self.request))
+        product = get_object_or_404(Product, id=self.kwargs['product_id'])      
+        cart_item = CartItem.objects.get(product=product, cart=cart, id=self.kwargs['cart_item_id'])
+        return cart_item
+
+    def delete(self, request, *args, **kwargs):
+        cart_item = self.get_object()
+        cart_item.delete()
+        return redirect(self.success_url)
 
 def add_cart(request, product_id):
     product = Product.objects.get(id=product_id)
