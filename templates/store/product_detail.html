@@ -52,12 +52,12 @@
 				{% if product.stock <= 0 %}
 					<h5>Out of Stocks</h5>
 				{% else %}
-					{% if in_cart %}
+					{% comment %} {% if in_cart %}
 						<h4>You Had This Item In Cart</h4>
 						<a href="{% url 'cart_view' %}" class="btn  btn-primary"> <span class="text">View Cart</span> <i class="fas fa-eye"></i>  </a>
-					{% else %}
+					{% else %} {% endcomment %}
 						<button type="submit" class="btn  btn-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i>  </button>
-					{% endif %}
+					{% comment %} {% endif %} {% endcomment %}
 				{% endif %}
 		</article> <!-- product-info-aside .// -->
 	</form>	
