@@ -95,7 +95,7 @@ class CartItemDeleteView(DeleteView):
 def add_cart(request, product_id):
     product = Product.objects.get(id=product_id)
 
-    # get product_variation
+    # below is get product_variation
     product_variation = []
     if request.method == 'POST':
         # get value by name in form
@@ -107,11 +107,12 @@ def add_cart(request, product_id):
             try:
                 #check key n value exact variation category/value, map the nameproduct to variation
                 variation = Variation.objects.get(product=product, variation_category__iexact=key, variation_value__iexact=value)
+                #product_variation it the product had unique variation
                 product_variation.append(variation) #store value in CartItem
             except:
                 pass
     
-    # get cart
+    # below is get cart
     try:
         cart = Cart.objects.get(cart_id = _cart_id(request))  # implement card using cart_id( it session product)
 
@@ -122,25 +123,48 @@ def add_cart(request, product_id):
     
     cart.save()
 
-    # get cart_item
-    try:
-        cart_item = CartItem.objects.get(product=product, cart=cart)    #conves product n session product to cart_item in cart
-        if len(product_variation) > 0:      #check if not empty then add in db
-            cart_item.variations.clear()
-            for item in product_variation:
-                cart_item.variations.add(item)
-        cart_item.quantity += 1 # increase after click
-        cart_item.save()
-    except CartItem.DoesNotExist:
-        cart_item = CartItem.objects.create(
-            product = product,
-            quantity = 1,
-            cart = cart,
+
+    # below is get cart_item
+
+    # check is_cart_item_exists(had that product in cart)
+    is_cart_item_exists = CartItem.objects.filter(product=product, cart=cart).exists() 
+    if is_cart_item_exists:
+        cart_item = CartItem.objects.filter(product=product, cart=cart)    #conves product n session product to cart_item in cart
+        # existing_variation
+        # current varitaion
+        #item id
+        #create variation n id for each product had different variation
+        exists_variation = []
+        id = []
+        for item in cart_item:  
+            '''fetch each product in cart_item take the variation had in each product
+            store it in exists_variation and store different id of product
+            have unique variation in id'''
+            existing_variation = item.variations.all()
+            exists_variation.append(list(existing_variation))
+            id.append(item.id)
+        
+        if product_variation in exists_variation:
+            '''if product_variation is exists in exists_variation
+            go to index of that product and plust it'''
+            index = exists_variation.index(product_variation)
+            item_id = id[index]
+            item = CartItem.objects.get(product=product, id=item_id)
+            item.quantity += 1 # increase after click
+            item.save()
+        else:
+            '''create new product had new unique variation'''
+            item = CartItem.objects.create(product=product, quantity = 1 , cart=cart)
+            if len(product_variation) > 0:      #check if not empty then add in db
+                item.variations.clear()
+                item.variations.add(*product_variation)
+            item.save()
+    else:
+        cart_item = CartItem.objects.create(product = product, quantity = 1, cart = cart,
         )
         if len(product_variation) > 0:
             cart_item.variations.clear()
-            for item in product_variation:
-                cart_item.variations.add(item)
+            cart_item.variations.add(*product_variation)
         cart_item.save()
     
     return redirect('cart_view')
