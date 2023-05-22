@@ -50,7 +50,7 @@ def register(request):
             #messages.success(request, 'Welcome to the site. We sent you a verification email to your email address. Please verify it')
 
             #if verify is success redirect to login form had email = email
-            return redirect('accounts/login/?command=verification&email='+email) 
+            return redirect('login/?command=verification&email='+email) 
     else:
         form =  RegistrationForm()
 
@@ -90,7 +90,7 @@ def activate(request, uidb64, token):
     except(TypeError, ValueError, OverflowError, Account.DoesNotExist):
         user = None
 
-    if user is not None & default_token_generator.check_token(user, token):
+    if user is not None and default_token_generator.check_token(user, token):
         user.is_active = True
         user.save()
         messages.success(request, 'Your account is acctivated!')
