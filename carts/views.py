@@ -145,6 +145,7 @@ def add_cart(request, product_id):
     is_cart_item_exists = CartItem.objects.filter(product=product, cart=cart).exists() 
     if is_cart_item_exists:
         cart_item = CartItem.objects.filter(product=product, cart=cart)    #conves product n session product to cart_item in cart
+
         #create variation n id for each product had different variation
         exists_variation = []
         id = []
