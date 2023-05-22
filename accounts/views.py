@@ -68,8 +68,8 @@ def login(request):
 
         if user is not None:
             auth.login(request, user)
-            #messages.success(request, 'You are now login')
-            return redirect('home')
+            messages.success(request, 'You are now login')
+            return redirect('dashbroad')
         else:
             messages.error(request, 'Invalid Login Credentials')
             return redirect('login')
@@ -80,6 +80,10 @@ def logout(request):
     auth.logout(request)
     messages.success(request, 'You are logout')
     return redirect('login')
+
+@login_required(login_url= 'login')
+def dashbroad(request):
+    return render(request, 'accounts/dashbroad.html')
 
 def activate(request, uidb64, token):
     '''get uid and token from request. Decode uid to get pk user,
