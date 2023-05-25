@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, RedirectView, DeleteView, ListView
 from django.core.exceptions import ObjectDoesNotExist
-#from django.contrib.auth.mixins import Mix
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 
 from store.models import Product, Variation
@@ -15,6 +15,8 @@ class CartItemView(ListView):
 
     # If you don't set the model. You must implement the get_queryset method to fetch the cart items and return a queryset
     def get_queryset(self):
+        '''Check cart exists or not if exists then return list card_item in the cart
+         else retun cart item none '''
         try:
             cart = Cart.objects.get(cart_id=_cart_id(self.request))
             cart_items = CartItem.objects.filter(cart=cart, is_active=True).order_by('-id')
@@ -54,11 +56,15 @@ def get_context_data(self, **kwargs):
 
     total = sum([cart_item.product.price * cart_item.quantity for cart_item in self.object_list]) 
     quantity = sum([cart_item.quantity for cart_item in self.object_list])
+    tax = (2 * total)/100
+    grand_total = total + tax
     
     context = {
         'total':total,
         'quantity':quantity,
         'cart_items':cart_items,
+        'tax':tax,
+        'grand_total':grand_total,
     }
     return context
 '''
@@ -80,7 +86,8 @@ class CartItemDeleteView(DeleteView):
         cart_item = get_object_or_404(CartItem, product=product, cart=cart, id=cart_item_id)
         return cart_item
     
-    def get(self, request, *args, **kwargs):    #to skip comfirm delete
+    #We overrides get method to skip comfirm delete( if u don't want use template_comfirm_delete in DeleteView)
+    def get(self, request, *args, **kwargs):    
         '''check if cart_item.quantity > 1 before decrementing the quantity and saving the object. 
         If the quantity becomes zero or less, we delete the cart_item directly.'''
         cart_item = self.get_object()
@@ -107,6 +114,41 @@ class RemoveCartItemView(DeleteView):
         cart_item.delete()
         return redirect(self.success_url)
 
+#same with CartItemView
+class CheckoutView(ListView):
+    template_name = 'store/checkout.html'
+    context_object_name = 'cart_items'
+
+    def get_queryset(self):
+        '''Check cart exists or not if exists then return list card_item in the cart
+         else retun cart item none '''
+        try:
+            cart = Cart.objects.get(cart_id=_cart_id(self.request))
+            return CartItem.objects.filter(cart=cart, is_active=True).order_by('-id')
+        except ObjectDoesNotExist:
+            return CartItem.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        total = 0
+        quantity = 0
+        tax = 0
+        grand_total = 0
+
+        for cart_item in context['cart_items']:
+            total += (cart_item.product.price * cart_item.quantity)
+            quantity += cart_item.quantity
+        tax = (2 * total)/100
+        grand_total = total + tax
+
+        context.update({
+            'total': total,
+            'quantity': quantity,
+            'tax': tax,
+            'grand_total': grand_total,
+        })
+        return context
+
 def add_cart(request, product_id):
     product = Product.objects.get(id=product_id)
 
@@ -120,7 +162,7 @@ def add_cart(request, product_id):
             value = request.POST[key]   # store the value of key(variation_value)
 
             try:
-                #check key n value exact variation category/value, map the nameproduct to variation
+                #check key n value exact variation category/value, map the name product to variation
                 variation = Variation.objects.get(product=product, variation_category__iexact=key, variation_value__iexact=value)
                 #product_variation it the product had unique variation
                 product_variation.append(variation) #store value in CartItem
@@ -129,7 +171,7 @@ def add_cart(request, product_id):
     
     # below is get cart
     try:
-        cart = Cart.objects.get(cart_id = _cart_id(request))  # implement card using cart_id( it session product)
+        cart = Cart.objects.get(cart_id = _cart_id(request))  # implement card using cart_id( it session user)
 
     except Cart.DoesNotExist:
         cart = Cart.objects.create(
@@ -144,7 +186,7 @@ def add_cart(request, product_id):
     # check is_cart_item_exists(had that product in cart)
     is_cart_item_exists = CartItem.objects.filter(product=product, cart=cart).exists() 
     if is_cart_item_exists:
-        cart_item = CartItem.objects.filter(product=product, cart=cart)    #conves product n session product to cart_item in cart
+        cart_item = CartItem.objects.filter(product=product, cart=cart)    #filter cart_item have same product n session user in cart
 
         #create variation n id for each product had different variation
         exists_variation = []
@@ -183,7 +225,7 @@ def add_cart(request, product_id):
     return redirect('cart_view')
 
 def _cart_id(request):
-    cart = request.session.session_key      # get session product 
+    cart = request.session.session_key      #make a cart by get session user
     if not cart:
         cart = request.session.create()
     return cart
