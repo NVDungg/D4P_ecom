@@ -101,7 +101,7 @@ def forgot_password(request):
             user = Account.objects.get(email__exact=email)
 
             #send email reset
-            current_site = get_current_site(request)
+            current_site = get_current_site(request)    #get the site host
             mail_subject = 'Reset Password'
             message = render_to_string('accounts/reset_password_email.html',{
                 'user': user,
