@@ -96,9 +96,40 @@ def login(request):
                 if is_cart_item_exists:
                     cart_item = CartItem.objects.filter(cart=cart)
 
+                    product_variation = []
+                    #store all variation product in here
                     for item in cart_item:
-                        item.user = user
-                        item.save()
+                        variation = item.variations.all()
+                        product_variation.append(list(variation))
+
+                    '''If the user is authenticated, the code retrieves all the CartItem objects associated with the user 
+                    and stores their variations and IDs in the exists_variation and id lists.'''
+                    cart_item = CartItem.objects.filter(user=user)
+                    exists_variation = []
+                    id = []
+                    for item in cart_item:  
+                        existing_variation = item.variations.all()
+                        exists_variation.append(list(existing_variation))
+                        id.append(item.id)
+
+                    '''compares the product_variation list with the exists_variation. If a variation in product_variation exists 
+                    in exists_variation, the code retrieves the id of the corresponding CartItem object and increments its quantity byone. 
+                    The user associated with the CartItem object is also updated with the current user and the changes are saved to the database.'''
+                    for pr in product_variation:
+                        if pr in exists_variation:
+                            index = exists_variation.index(pr)
+                            item_id = id[index]
+                            item = CartItem.objects.get(id=item_id)
+                            item.quantity += 1 # increase after click
+                            item.user = user
+                            item.save()
+
+                        else:
+                            cart_item = CartItem.objects.filter(cart=cart)
+                            for item in cart_item:
+                                item.user = user
+                                item.save()
+      
             except:
                 pass
             auth.login(request, user)

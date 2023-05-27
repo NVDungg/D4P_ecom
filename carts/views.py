@@ -85,7 +85,6 @@ class CartItemDeleteView(DeleteView):
         # Get object 
         product = get_object_or_404(Product, id=product_id)
         cart = Cart.objects.get(cart_id=_cart_id(self.request))
-
         #n conves it to return
         cart_item = get_object_or_404(CartItem, product=product, cart=cart, id=cart_item_id)
         return cart_item
@@ -154,82 +153,147 @@ class CheckoutView(LoginRequiredMixin, ListView):
         return context
 
 def add_cart(request, product_id):
+    current_user = request.user
     product = Product.objects.get(id=product_id)
 
-    # below is get product_variation
-    product_variation = []
-    if request.method == 'POST':
-        # get value by name in form
-        # instead of get 1 by 1 value color/size = request.POST['color/size'] .We can use for to get every thing form had
-        for item in request.POST:
-            key = item                  # get the key is name(variation_category) in form (color/size)
-            value = request.POST[key]   # store the value of key(variation_value)
+    #if it user authenticated user. Cart it save by user
+    if current_user.is_authenticated:
+        # below is get product_variation
+        product_variation = []
+        if request.method == 'POST':
+            # get value by name in form
+            # instead of get 1 by 1 value color/size = request.POST['color/size'] .We can use for to get every thing form had
+            for item in request.POST:
+                key = item                  # get the key is name(variation_category) in form (color/size)
+                value = request.POST[key]   # store the value of key(variation_value)
 
-            try:
-                #check key n value exact variation category/value, map the name product to variation
-                variation = Variation.objects.get(product=product, variation_category__iexact=key, variation_value__iexact=value)
-                #product_variation it the product had unique variation
-                product_variation.append(variation) #store value in CartItem
-            except:
-                pass
-    
-    # below is get cart
-    try:
-        cart = Cart.objects.get(cart_id = _cart_id(request))  # implement card using cart_id( it session user)
+                try:
+                    #check key n value exact variation category/value, map the name product to variation
+                    variation = Variation.objects.get(product=product, variation_category__iexact=key, variation_value__iexact=value)
+                    #product_variation it the product had unique variation
+                    product_variation.append(variation) #store value in CartItem
+                except:
+                    pass 
 
-    except Cart.DoesNotExist:
-        cart = Cart.objects.create(
-            cart_id = _cart_id(request),
-        )
-    
-    cart.save()
+        # below is get cart_item
+        # check is_cart_item_exists(had that product in cart)
+        is_cart_item_exists = CartItem.objects.filter(product=product, user=current_user).exists() 
+        if is_cart_item_exists:
+            #filter cart_item have same product n user in cart
+            cart_item = CartItem.objects.filter(product=product, user=current_user)    
 
-
-    # below is get cart_item
-
-    # check is_cart_item_exists(had that product in cart)
-    is_cart_item_exists = CartItem.objects.filter(product=product, cart=cart).exists() 
-    if is_cart_item_exists:
-        cart_item = CartItem.objects.filter(product=product, cart=cart)    #filter cart_item have same product n session user in cart
-
-        #create variation n id for each product had different variation
-        exists_variation = []
-        id = []
-        for item in cart_item:  
-            '''fetch each product in cart_item take the variation had in each product
-            store it in exists_variation and store different id of product
-            have unique variation in id'''
-            existing_variation = item.variations.all()
-            exists_variation.append(list(existing_variation))
-            id.append(item.id)
-        
-        if product_variation in exists_variation:
-            '''if product_variation is exists in exists_variation
-            go to index of that product and plust it'''
-            index = exists_variation.index(product_variation)
-            item_id = id[index]
-            item = CartItem.objects.get(product=product, id=item_id)
-            item.quantity += 1 # increase after click
-            item.save()
+            #create variation n id for each product had different variation
+            exists_variation = []
+            id = []
+            for item in cart_item:  
+                '''fetch each product in cart_item take the variation had in each product
+                store it in exists_variation and store different id of product
+                have unique variation in id'''
+                existing_variation = item.variations.all()
+                exists_variation.append(list(existing_variation))
+                id.append(item.id)
+            
+            if product_variation in exists_variation:
+                '''if product_variation have item same variation is exists in exists_variation
+                go to index of that product and increase  it'''
+                index = exists_variation.index(product_variation)
+                item_id = id[index]
+                item = CartItem.objects.get(product=product, id=item_id)
+                item.quantity += 1 # increase after click
+                item.save()
+            else:
+                '''create new product had new unique variation. In cart have same user'''
+                item = CartItem.objects.create(product=product, quantity = 1 , user=current_user)
+                if len(product_variation) > 0:      #check if not empty then add in db
+                    item.variations.clear()
+                    item.variations.add(*product_variation)
+                item.save()
         else:
-            '''create new product had new unique variation'''
-            item = CartItem.objects.create(product=product, quantity = 1 , cart=cart)
-            if len(product_variation) > 0:      #check if not empty then add in db
-                item.variations.clear()
-                item.variations.add(*product_variation)
-            item.save()
-    else:
-        cart_item = CartItem.objects.create(product = product, quantity = 1, cart = cart,
-        )
-        if len(product_variation) > 0:
-            cart_item.variations.clear()
-            cart_item.variations.add(*product_variation)
-        cart_item.save()
+            cart_item = CartItem.objects.create(product = product, quantity = 1, user=current_user)
+            if len(product_variation) > 0:
+                cart_item.variations.clear()
+                cart_item.variations.add(*product_variation)
+            cart_item.save()
+        
+        return redirect('cart_view')
     
-    return redirect('cart_view')
+    #if user not authenticated. Cart it save by session anonymous user(client session)
+    else:
+
+        # below is get product_variation
+        product_variation = []
+        if request.method == 'POST':
+            # get value by name in form
+            # instead of get 1 by 1 value color/size = request.POST['color/size'] .We can use for to get every thing form had
+            for item in request.POST:
+                key = item                  # get the key is name(variation_category) in form (color/size)
+                value = request.POST[key]   # store the value of key(variation_value)
+
+                try:
+                    #check key n value exact variation category/value, map the name product to variation
+                    variation = Variation.objects.get(product=product, variation_category__iexact=key, variation_value__iexact=value)
+                    #product_variation it the product had unique variation
+                    product_variation.append(variation) #store value in CartItem
+                except:
+                    pass
+        
+        # below is get cart. 
+        """Cause we don't had authenticated user to save cart_item in cart use.
+          So we have to take session anonymous user to save cart item in cart"""
+        try:
+            cart = Cart.objects.get(cart_id = _cart_id(request))  # implement card using cart_id( it session user)
+
+        except Cart.DoesNotExist:
+            cart = Cart.objects.create(
+                cart_id = _cart_id(request),
+            )
+        
+        cart.save()
+
+
+        # below is get cart_item
+        # check is_cart_item_exists(had that product in cart)
+        is_cart_item_exists = CartItem.objects.filter(product=product, cart=cart).exists() 
+        if is_cart_item_exists:
+            cart_item = CartItem.objects.filter(product=product, cart=cart)    #filter cart_item have same product n session user in cart
+
+            #create variation n id for each product had different variation
+            exists_variation = []
+            id = []
+            for item in cart_item:  
+                '''fetch each product in cart_item take the variation had in each product
+                store it in exists_variation and store different id of product
+                have unique variation in id'''
+                existing_variation = item.variations.all()
+                exists_variation.append(list(existing_variation))
+                id.append(item.id)
+            
+            if product_variation in exists_variation:
+                '''if product_variation have item same variation is exists in exists_variation
+                go to index of that product and increase  it'''
+                index = exists_variation.index(product_variation)
+                item_id = id[index]
+                item = CartItem.objects.get(product=product, id=item_id)
+                item.quantity += 1 # increase after click
+                item.save()
+            else:
+                '''create new product had new unique variation'''
+                item = CartItem.objects.create(product=product, quantity = 1 , cart=cart)
+                if len(product_variation) > 0:      #check if not empty then add in db
+                    item.variations.clear()
+                    item.variations.add(*product_variation)
+                item.save()
+        else:
+            cart_item = CartItem.objects.create(product = product, quantity = 1, cart = cart)
+            if len(product_variation) > 0:
+                cart_item.variations.clear()
+                cart_item.variations.add(*product_variation)
+            cart_item.save()
+        
+        return redirect('cart_view')
 
 def _cart_id(request):
-    cart = request.session.session_key      #make a cart by get session user
+    cart = request.session.session_key      #make a cart by get session anonymous user(client session)
     if not cart:
         cart = request.session.create()
     return cart
