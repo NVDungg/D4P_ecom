@@ -84,10 +84,16 @@ class CartItemDeleteView(DeleteView):
 
         # Get object 
         product = get_object_or_404(Product, id=product_id)
-        cart = Cart.objects.get(cart_id=_cart_id(self.request))
-        #n conves it to return
-        cart_item = get_object_or_404(CartItem, product=product, cart=cart, id=cart_item_id)
-        return cart_item
+
+        if self.request.user.is_authenticated:  # Get cart by client session
+            cart_item = CartItem.objects.get(product=product, user=self.request.user, id=cart_item_id)
+            return cart_item
+        else:
+            # Get cart by client session
+            cart = Cart.objects.get(cart_id=_cart_id(self.request))
+            #n conves it to return
+            cart_item = get_object_or_404(CartItem, product=product, cart=cart, id=cart_item_id)
+            return cart_item
     
     #We overrides get method to skip comfirm delete( if u don't want use template_comfirm_delete in DeleteView)
     def get(self, request, *args, **kwargs):    
@@ -107,10 +113,17 @@ class RemoveCartItemView(DeleteView):
     success_url = reverse_lazy('cart_view')
 
     def get_object(self, queryset=None):
-        cart = Cart.objects.get(cart_id=_cart_id(self.request))
-        product = get_object_or_404(Product, id=self.kwargs['product_id'])      
-        cart_item = CartItem.objects.get(product=product, cart=cart, id=self.kwargs['cart_item_id'])
-        return cart_item
+        product = get_object_or_404(Product, id=self.kwargs['product_id'])
+        cart_item_id = self.kwargs.get('cart_item_id')
+
+        if self.request.user.is_authenticated:  # Get cart by client session
+            cart_item = CartItem.objects.get(product=product, user=self.request.user, id=cart_item_id)
+            return cart_item
+        else:
+            # Get cart by client session
+            cart = Cart.objects.get(cart_id=_cart_id(self.request))           
+            cart_item = CartItem.objects.get(product=product, cart=cart, id=self.kwargs['cart_item_id'])
+            return cart_item
 
     def delete(self, request, *args, **kwargs):
         cart_item = self.get_object()
