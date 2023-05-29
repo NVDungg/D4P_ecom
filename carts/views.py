@@ -136,13 +136,18 @@ class CheckoutView(LoginRequiredMixin, ListView):
     context_object_name = 'cart_items'
 
     def get_queryset(self):
-        '''Check cart exists or not if exists then return list card_item in the cart
-         else retun cart item none '''
-        try:
-            cart = Cart.objects.get(cart_id=_cart_id(self.request))
-            return CartItem.objects.filter(cart=cart, is_active=True).order_by('-id')
-        except ObjectDoesNotExist:
-            return CartItem.objects.none()
+        if self.request.user.is_authenticated:
+            cart_items = CartItem.objects.filter(user=self.request.user, is_active=True).order_by('-id')
+            return cart_items
+        else:
+            '''Check cart exists or not if exists then return list card_item in the cart
+            else retun cart item none '''
+            try:
+                cart = Cart.objects.get(cart_id=_cart_id(self.request))
+                cart_items = CartItem.objects.filter(cart=cart, is_active=True).order_by('-id')
+                return cart_items   # This context name ( You can return CartItem.objects.filter(cart=cart, is_active=True) soo u can use any context u naming)
+            except ObjectDoesNotExist:
+                return CartItem.objects.non
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

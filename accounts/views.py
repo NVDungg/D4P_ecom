@@ -12,6 +12,8 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 
+import requests
+
 from .forms import RegistrationForm
 from .models import Account
 from carts.models import Cart, CartItem
@@ -134,7 +136,18 @@ def login(request):
                 pass
             auth.login(request, user)
             messages.success(request, 'You are now login')
-            return redirect('dashbroad')
+            url = request.META.get('HTTP_REFERER')
+            try:
+                query = requests.utils.urlparse(url).query
+                #out put query it: next=/cart/checkout/
+                params = dict(x.split('=') for x in query.split('&'))
+                #out put params it: {'next': '/cart/checkout/'}
+
+                if 'next' in params:
+                    nextPage = params['next']
+                    return redirect(nextPage)
+            except:
+                return redirect('dashbroad')
         else:
             messages.error(request, 'Invalid Login Credentials')
             return redirect('login')
