@@ -41,7 +41,7 @@ def payments(request):
         orderproduct.ordered = True
         orderproduct.save()
 
-        cart_item = CartItem.objects.get(id=item.id)
+    ''' cart_item = CartItem.objects.get(id=item.id)
         product_variation = cart_item.variations.all()
         orderproduct = OrderProduct.objects.get(id=orderproduct.id)
         orderproduct.variations.set(product_variation)
@@ -71,7 +71,7 @@ def payments(request):
         'order_number': order.order_number,
         'transID': payment.payment_id,
     }
-    return JsonResponse(data)
+    return JsonResponse(data)'''
     return render(request, 'orders/payments.html')
 
 def place_order(request, total = 0, quantity = 0):
@@ -80,8 +80,6 @@ def place_order(request, total = 0, quantity = 0):
     cart_cout = cart_items.count()
     if cart_cout <= 0:
         return redirect('store')
-    
-
     
     tax = 0
     grand_total = 0
@@ -123,7 +121,7 @@ def place_order(request, total = 0, quantity = 0):
             data.order_number = order_number
             data.save()
 
-            order = Order.objects.get(user = current_user, is_ordered = False)
+            order = Order.objects.get(user = current_user, is_ordered = False, order_number = order_number)
             context = {
                 'order': order,
                 'cart_items': cart_items,
