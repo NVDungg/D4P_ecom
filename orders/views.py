@@ -20,7 +20,7 @@ def payments(request):
     # retrieves the order, filtered based on the user, whether it is not yet ordered.  order number obtained from the request body.
     order = Order.objects.get(user=request.user, is_ordered=False, order_number=body['orderID'])
 
-    # Store transaction details inside Payment model
+    # Store transaction details in payment json inside Payment model
     payment = Payment(
         user = request.user,
         payment_id = body['transID'],
@@ -118,6 +118,7 @@ def place_order(request, total = 0, quantity = 0):
             data.save()
 
             # Generate order number
+            # By take d-m-y of day create + id of Order
             yr = int(datetime.date.today().strftime('%Y'))
             dt = int(datetime.date.today().strftime('%d'))
             mt = int(datetime.date.today().strftime('%m'))
@@ -140,6 +141,7 @@ def place_order(request, total = 0, quantity = 0):
             return redirect('checkout')
 
 def order_complete(request):
+    # Get from json body. It passed in the url as part of the redirect from the payment gateway.
     order_number = request.GET.get('order_number')
     transID = request.GET.get('payment_id')
 
@@ -147,10 +149,12 @@ def order_complete(request):
         order = Order.objects.get(order_number=order_number, is_ordered=True)
         ordered_products = OrderProduct.objects.filter(order_id=order.id)
 
+        # Calculates the subtotal by iterating over the ordered products and summing up the product price multiplied by the quantity.
         subtotal = 0
         for i in ordered_products:
             subtotal += i.product_price * i.quantity
 
+        # It retrieves the payment object associated with the provided transID.
         payment = Payment.objects.get(payment_id=transID)
 
         context = {
