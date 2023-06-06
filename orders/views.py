@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 
 import datetime
 import json
@@ -10,7 +12,11 @@ from .models import Order, Payment, OrderProduct
 
 # Create your views here.
 def payments(request):
-    body = json.loads(request.body)
+    #receives a POST request containing the payment details in the request body, expected to be in JSON format
+    #The request body is parsed as JSON using json.loads(request.body) to extract the payment information.
+    body = json.loads(request.body) 
+
+    # retrieves the order, filtered based on the user, whether it is not yet ordered.  order number obtained from the request body.
     order = Order.objects.get(user=request.user, is_ordered=False, order_number=body['orderID'])
 
     # Store transaction details inside Payment model
@@ -41,14 +47,14 @@ def payments(request):
         orderproduct.ordered = True
         orderproduct.save()
 
-    ''' cart_item = CartItem.objects.get(id=item.id)
+        cart_item = CartItem.objects.get(id=item.id)
         product_variation = cart_item.variations.all()
         orderproduct = OrderProduct.objects.get(id=orderproduct.id)
         orderproduct.variations.set(product_variation)
         orderproduct.save()
 
 
-        # Reduce the quantity of the sold products
+    # Reduce the quantity of the sold products
         product = Product.objects.get(id=item.product_id)
         product.stock -= item.quantity
         product.save()
@@ -66,7 +72,7 @@ def payments(request):
     send_email = EmailMessage(mail_subject, message, to=[to_email])
     send_email.send()
 
-    # Send order number and transaction id back to sendData method via JsonResponse
+    '''# Send order number and transaction id back to sendData method via JsonResponse
     data = {
         'order_number': order.order_number,
         'transID': payment.payment_id,
