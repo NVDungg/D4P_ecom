@@ -8,6 +8,7 @@ from .forms import ReviewForm
 from .models import Product, ReviewRating
 from categorys.models import Category
 from carts.models import CartItem
+from orders.models import OrderProduct
 from carts.views import _cart_id
 
 # Create your views here.
@@ -63,8 +64,20 @@ class ProductDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         #Check Item in_cart
         in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(self.request), product=self.object).exists()
+        
+        #check if user have buy this item or not. To that user can write review or not
+        try:
+            orderproduct = OrderProduct.objects.filter(user=self.request.user, product_id=self.object.id).exists()
+        except OrderProduct.DoesNotExist:
+            orderproduct = None
+
+        #Get the review
+        reviews = ReviewRating.objects.filter(product_id=self.object.id, status=True)
+
         context.update({
             'in_cart':in_cart,
+            'orderproduct':orderproduct,
+            'reviews':reviews,
         })
         return context
     
