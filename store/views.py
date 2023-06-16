@@ -66,9 +66,12 @@ class ProductDetailView(DetailView):
         in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(self.request), product=self.object).exists()
         
         #check if user have buy this item or not. To that user can write review or not
-        try:
-            orderproduct = OrderProduct.objects.filter(user=self.request.user, product_id=self.object.id).exists()
-        except OrderProduct.DoesNotExist:
+        if self.request.user.is_authenticated:
+            try:
+                orderproduct = OrderProduct.objects.filter(user=self.request.user, product_id=self.object.id).exists()
+            except OrderProduct.DoesNotExist:
+                orderproduct = None
+        else:
             orderproduct = None
 
         #Get the review
