@@ -85,7 +85,7 @@ def place_order(request, total = 0, quantity = 0):
     cart_items = CartItem.objects.filter(user=current_user)
     cart_cout = cart_items.count()
     if cart_cout <= 0:
-        return redirect('store')
+        return redirect('product_list')
     
     tax = 0
     grand_total = 0

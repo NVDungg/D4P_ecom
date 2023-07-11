@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.contrib import messages
 
 from .forms import ReviewForm
-from .models import Product, ReviewRating
+from .models import Product, ReviewRating, ProductGallery
 from categorys.models import Category
 from carts.models import CartItem
 from orders.models import OrderProduct
@@ -16,7 +16,7 @@ class ProductListView(ListView):
     model = Product
     template_name = 'store/store.html'
     paginate_by = 6
-
+    
     def get_context_data(self, **kwargs):
         #retrieves the value of the category_slug parameter from the URL path.
         category_slug = self.kwargs.get('category_slug')
@@ -66,18 +66,25 @@ class ProductDetailView(DetailView):
         in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(self.request), product=self.object).exists()
         
         #check if user have buy this item or not. To that user can write review or not
-        try:
-            orderproduct = OrderProduct.objects.filter(user=self.request.user, product_id=self.object.id).exists()
-        except OrderProduct.DoesNotExist:
+        if self.request.user.is_authenticated:
+            try:
+                orderproduct = OrderProduct.objects.filter(user=self.request.user, product_id=self.object.id).exists()
+            except OrderProduct.DoesNotExist:
+                orderproduct = None
+        else:
             orderproduct = None
 
         #Get the review
         reviews = ReviewRating.objects.filter(product_id=self.object.id, status=True)
 
+        #Get product gallery
+        product_gallery = ProductGallery.objects.filter(product_id=self.object.id)
+
         context.update({
             'in_cart':in_cart,
             'orderproduct':orderproduct,
             'reviews':reviews,
+            'product_gallery':product_gallery,
         })
         return context
     

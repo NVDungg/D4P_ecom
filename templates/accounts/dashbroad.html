@@ -8,7 +8,7 @@
 {% include 'alerts.html' %}
 <div class="container">
 	<div class="row">
-	{% include 'accounts/dashbroad_sitebar.html' %}
+	{% include 'accounts/dashboard_sitebar.html' %}
 	<main class="col-md-9">
 		<article class="card">
 		<header class="card-header">
@@ -23,7 +23,7 @@
 					<div class="card-body">
 						<h5 class="card-title">Total Orders</h5>
 						<h4>{{orders_count}}</h4>
-						<a href="">View Orders</a>
+						<a href="{% url 'my_orders' %}">View Orders</a>
 					</div>
 				</div>
 			</div>
