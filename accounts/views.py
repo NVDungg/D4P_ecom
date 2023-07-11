@@ -297,12 +297,15 @@ def order_detail(request, order_id):
 
 @login_required(login_url= 'login')
 def dashbroad(request):
-    userprofile = UserProfile.objects.get(user_id=request.user)
+    
     orders = Order.objects.filter(user_id=request.user.id, is_ordered=True).order_by('-created_at')
     orders_count = orders.count()
+
+    userprofile = UserProfile.objects.get(user_id=request.user.id)
+    
     context = {
-        'orders_count':orders_count,
-        'userprofile':userprofile,
+        'orders_count': orders_count,
+        'userprofile': userprofile,
     }
     return render(request, 'accounts/dashbroad.html', context)
 
